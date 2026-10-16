@@ -51,7 +51,7 @@ struct ContentView: View {
         .alert("Offline maps", isPresented: Binding(get: { !model.offline.status.isEmpty && !model.offline.isDownloading && model.offline.status != "Offline map ready" }, set: { if !$0 { model.offline.status = "" } })) {
             Button("OK", role: .cancel) { model.offline.status = "" }
         } message: { Text(model.offline.status) }
-        .task(id: model.route.points.count) {
+        .task(id: model.route.updatedAt) {
             guard model.route.points.count > 1, model.route.elevations.isEmpty else { return }
             await model.loadElevation()
         }
@@ -88,7 +88,7 @@ struct ContentView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(model.isPlanning ? "Plan your hike" : "Map & routes").font(.headline.weight(.bold))
-                    Text(model.isPlanning ? "Tap the map to add route points" : "Open map data or sketch a route").font(.caption).foregroundStyle(.secondary)
+                    Text(model.isPlanning ? "Tap to add points · routes follow mapped trails" : "Load nearby paths, then sketch a route").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button { showingRoutes = true } label: { Label("Saved", systemImage: "bookmark.fill").font(.caption.weight(.semibold)) }
@@ -100,7 +100,7 @@ struct ContentView: View {
                 HStack(spacing: 0) {
                     metric(title: "DISTANCE", value: String(format: "%.2f mi", model.route.distanceMeters / 1609.344))
                     Divider().frame(height: 34)
-                    metric(title: "WAYPOINTS", value: "\(model.route.points.count)")
+                    metric(title: "WAYPOINTS", value: "\(model.route.waypointCount)")
                     Divider().frame(height: 34)
                     metric(title: "ELEVATION", value: model.route.elevations.isEmpty ? (model.isLoadingElevation ? "Loading" : "—") : String(format: "+%.0f ft", elevationGainFeet))
                 }
@@ -258,3 +258,4 @@ struct ContentView: View {
         .presentationDetents([.medium, .large])
     }
 }
+

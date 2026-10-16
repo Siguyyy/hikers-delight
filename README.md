@@ -6,7 +6,7 @@ Trailwise is an iPhone hiking map and route planner built around open map data. 
 
 - MapLibre vector map using OpenFreeMap styles, with map-style switching.
 - OpenStreetMap trail and outdoor point-of-interest overlays for the map area you are viewing. Campgrounds, huts, trail paths, water, parking, peaks, and viewpoints are included when mapped in OSM.
-- Tap-to-draw route planning with undo and a distance/elevation profile.
+- Tap-to-draw route planning with undo, automatic path-following over locally loaded OSM trail segments, GPX import/export, and a distance/elevation profile.
 - Elevation samples from the USGS Elevation Point Query Service for U.S. routes.
 - Offline map packs for a selected map area, and local storage for saved route data.
 - iOS GitHub Actions build. The workflow packages an **unsigned** IPA; it is not installable until signed with an Apple Developer certificate and provisioning profile.

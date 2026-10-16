@@ -18,6 +18,7 @@ struct TrailCoordinate: Codable, Hashable {
 struct SavedRoute: Codable, Identifiable {
     var id = UUID()
     var name = "Untitled hike"
+    var waypoints: [TrailCoordinate] = []
     var points: [TrailCoordinate] = []
     var elevations: [ElevationSample] = []
     var updatedAt = Date()
@@ -27,6 +28,7 @@ struct SavedRoute: Codable, Identifiable {
     }
 
     var distanceKilometers: Double { distanceMeters / 1_000 }
+    var waypointCount: Int { waypoints.isEmpty ? points.count : waypoints.count }
 }
 
 struct ElevationSample: Codable, Identifiable {

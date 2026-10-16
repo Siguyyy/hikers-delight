@@ -265,6 +265,7 @@ final class TrailwiseModel: ObservableObject {
             let newFeatures = try await OutdoorDataService.fetch(bounds: visibleBounds)
             features = newFeatures
             if let data = try? JSONEncoder().encode(newFeatures) { try? data.write(to: featuresURL, options: .atomic) }
+            if route.waypoints.count > 1 { rebuildRoute() }
             banner = "Loaded \(newFeatures.count) mapped outdoor features · OpenStreetMap"
         } catch {
             banner = error.localizedDescription
@@ -273,14 +274,16 @@ final class TrailwiseModel: ObservableObject {
 
     func addPoint(_ coordinate: TrailCoordinate) {
         guard isPlanning else { return }
-        route.points.append(coordinate)
+        route.waypoints.append(coordinate)
+        rebuildRoute()
         route.updatedAt = Date()
         route.elevations = []
     }
 
     func undoPoint() {
-        guard !route.points.isEmpty else { return }
-        route.points.removeLast()
+        guard !route.waypoints.isEmpty else { return }
+        route.waypoints.removeLast()
+        rebuildRoute()
         route.elevations = []
     }
 
@@ -317,9 +320,20 @@ final class TrailwiseModel: ObservableObject {
 
     func importGPX(_ data: Data) throws {
         let points = try GPXCodec.decode(data)
-        route = SavedRoute(name: "Imported hike", points: points)
+        route = SavedRoute(name: "Imported hike", waypoints: points, points: points)
         isPlanning = false
         saveRoute()
+    }
+
+    private func rebuildRoute() {
+        let result = TrailRouter.plan(through: route.waypoints, trails: features.filter { $0.kind == .trail })
+        route.points = result.points
+        route.updatedAt = Date()
+        if result.snappedSegmentCount > 0 {
+            banner = "Route follows mapped trails for \(result.snappedSegmentCount) of \(result.segmentCount) segments"
+        } else if result.segmentCount > 0 {
+            banner = "Straight line used · load trail data here to follow mapped paths"
+        }
     }
 
     private func persist() {
@@ -327,3 +341,4 @@ final class TrailwiseModel: ObservableObject {
         try? data.write(to: saveURL, options: .atomic)
     }
 }
+

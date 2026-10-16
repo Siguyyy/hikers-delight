@@ -83,10 +83,11 @@ struct TrailMapView: UIViewRepresentable {
                 line.title = "route"
                 mapView.add(line)
             }
-            for (index, point) in parent.model.route.points.enumerated() {
+            let waypoints = parent.model.route.waypoints.isEmpty ? parent.model.route.points : parent.model.route.waypoints
+            for (index, point) in waypoints.enumerated() {
                 let pin = MLNPointAnnotation()
                 pin.coordinate = point.clLocation
-                pin.title = index == 0 ? "Start" : (index == parent.model.route.points.count - 1 ? "Finish" : "Waypoint \(index + 1)")
+                pin.title = index == 0 ? "Start" : (index == waypoints.count - 1 ? "Finish" : "Waypoint \(index + 1)")
                 mapView.addAnnotation(pin)
             }
         }
