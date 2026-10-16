@@ -68,7 +68,7 @@ struct TrailMapView: UIViewRepresentable {
             for feature in features {
                 if feature.kind == .trail, feature.path.count > 1, let line = makePolyline(feature.path) {
                     line.title = "trail"
-                    mapView.addOverlay(line)
+                    mapView.add(line)
                 }
                 if let coordinate = feature.coordinate {
                     let pin = MLNPointAnnotation()
@@ -81,7 +81,7 @@ struct TrailMapView: UIViewRepresentable {
 
             if parent.model.route.points.count > 1, let line = makePolyline(parent.model.route.points) {
                 line.title = "route"
-                mapView.addOverlay(line)
+                mapView.add(line)
             }
             for (index, point) in parent.model.route.points.enumerated() {
                 let pin = MLNPointAnnotation()
@@ -92,7 +92,7 @@ struct TrailMapView: UIViewRepresentable {
         }
 
         private func makePolyline(_ points: [TrailCoordinate]) -> MLNPolyline? {
-            var coordinates = points.map(\.clLocation)
+            let coordinates = points.map(\.clLocation)
             guard coordinates.count > 1 else { return nil }
             return coordinates.withUnsafeBufferPointer { buffer in
                 guard let baseAddress = buffer.baseAddress else { return nil }
@@ -101,3 +101,4 @@ struct TrailMapView: UIViewRepresentable {
         }
     }
 }
+
