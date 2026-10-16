@@ -1,0 +1,7 @@
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+*.mobileprovision
+*.p12
+Secrets.xcconfig

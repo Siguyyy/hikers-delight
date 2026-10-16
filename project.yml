@@ -1,0 +1,29 @@
+name: Trailwise
+options:
+  bundleIdPrefix: com.siguyyy
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-gl-native-distribution
+    from: 6.18.0
+targets:
+  Trailwise:
+    type: application
+    platform: iOS
+    sources:
+      - path: Trailwise
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.siguyyy.trailwise
+        PRODUCT_NAME: Trailwise
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: Trailwise
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Your location is shown on the map and used to record hikes.
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.travel
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: MapLibre
+        product: MapLibre
