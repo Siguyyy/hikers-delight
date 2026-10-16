@@ -36,7 +36,7 @@ struct ElevationSample: Codable, Identifiable {
 }
 
 struct OutdoorFeature: Identifiable, Hashable, Codable {
-    enum Kind: String, CaseIterable {
+    enum Kind: String, CaseIterable, Codable {
         case campsite = "Campsites"
         case hut = "Huts"
         case water = "Water"
@@ -121,3 +121,4 @@ enum OutdoorMapStyle: String, CaseIterable, Identifiable {
         }
     }
 }
+
