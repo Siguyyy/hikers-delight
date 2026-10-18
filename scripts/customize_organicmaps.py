@@ -28,9 +28,28 @@ def main() -> None:
     map_controller = root / "iphone/Maps/UI/Map/MapViewController.mm"
     overlay_manager = root / "iphone/CoreApi/CoreApi/Traffic/MWMMapOverlayManager.h"
     tab_bar = root / "iphone/Maps/UI/BottomMenu/TabBar/BottomTabBarViewController.swift"
+    maps_project = root / "iphone/Maps/Maps.xcodeproj/project.pbxproj"
 
-    if not map_controller.exists() or not overlay_manager.exists() or not tab_bar.exists():
+    if not map_controller.exists() or not overlay_manager.exists() or not tab_bar.exists() or not maps_project.exists():
         raise RuntimeError(f"Not an Organic Maps checkout: {root}")
+
+    # iOS sideloaders require every embedded extension identifier to be nested
+    # under the main application identifier. Upstream uses app.organicmaps.*
+    # identifiers, which are valid for the upstream app but are rejected when
+    # the rebuilt app is com.siguyyy.hikersdelight.
+    project_text = maps_project.read_text(encoding="utf-8")
+    old_project_text = project_text
+    project_text = project_text.replace(
+        "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps.debug.widgetextension;",
+        "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight.OMapsWidgetExtension;",
+    )
+    project_text = project_text.replace(
+        "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps.widgetextension;",
+        "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight.OMapsWidgetExtension;",
+    )
+    if project_text == old_project_text:
+        raise RuntimeError("Could not find Organic Maps widget bundle identifiers")
+    maps_project.write_text(project_text, encoding="utf-8")
 
     replace_once(
         map_controller,
