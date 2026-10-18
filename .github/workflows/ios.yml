@@ -1,4 +1,4 @@
-name: iOS Build
+name: Hiker's Delight iOS
 
 on:
   push:
@@ -15,80 +15,49 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Install XcodeGen
-        run: brew install xcodegen
-      - name: Generate Xcode project
-        run: xcodegen generate
-      - name: Build unsigned app
-        run: xcodebuild -project Trailwise.xcodeproj -scheme Trailwise -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
-      - name: Package unsigned IPA for signing
+
+      - name: Checkout pinned Organic Maps source and apply Hiker's Delight layer
+        id: prepare
+        shell: bash
+        run: |
+          scripts/prepare_organicmaps.sh
+          echo "organicmaps=$RUNNER_TEMP/organicmaps" >> "$GITHUB_OUTPUT"
+
+      - name: Build the real offline-map app
+        shell: bash
+        working-directory: ${{ steps.prepare.outputs.organicmaps }}
+        run: |
+          xcodebuild build \
+            -workspace xcode/omim.xcworkspace \
+            -scheme OMaps \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
+            MARKETING_VERSION=0.1.0 \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }}
+
+      - name: Package unsigned IPA
+        working-directory: ${{ steps.prepare.outputs.organicmaps }}
+        shell: bash
         run: |
           mkdir -p build/Payload
-          cp -R build/Build/Products/Release-iphoneos/Trailwise.app build/Payload/
-          cd build && zip -r Trailwise-unsigned.ipa Payload
+          app_path="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -type d | head -n 1)"
+          test -n "$app_path"
+          cp -R "$app_path" build/Payload/HikersDelight.app
+          cd build
+          zip -qry HikersDelight-unsigned.ipa Payload
+
+      - name: Validate IPA bundles
+        working-directory: ${{ steps.prepare.outputs.organicmaps }}
+        shell: bash
+        run: python3 "${GITHUB_WORKSPACE}/scripts/validate_ipa.py" build/HikersDelight-unsigned.ipa
+
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: trailwise-unsigned-ipa
-          path: build/Trailwise-unsigned.ipa
-          if-no-files-found: error
-      - name: Check Apple signing configuration
-        id: signing
-        shell: bash
-        env:
-          CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
-          TEAM: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          if [[ -n "$CERTIFICATE" && -n "$CERTIFICATE_PASSWORD" && -n "$PROFILE" && -n "$TEAM" ]]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Install signing certificate and profile
-        if: steps.signing.outputs.configured == 'true'
-        shell: bash
-        env:
-          CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
-        run: |
-          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
-          echo "$PROFILE" | base64 --decode > "$RUNNER_TEMP/trailwise.mobileprovision"
-          security cms -D -i "$RUNNER_TEMP/trailwise.mobileprovision" > "$RUNNER_TEMP/profile.plist"
-          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/build.keychain"
-          security set-keychain-settings -lut 21600 "$RUNNER_TEMP/build.keychain"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/build.keychain"
-          security import "$RUNNER_TEMP/distribution.p12" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$RUNNER_TEMP/build.keychain"
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/build.keychain"
-          security list-keychains -d user -s "$RUNNER_TEMP/build.keychain"
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$RUNNER_TEMP/profile.plist")
-          cp "$RUNNER_TEMP/trailwise.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
-          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
-      - name: Archive and export signed IPA
-        if: steps.signing.outputs.configured == 'true'
-        env:
-          TEAM: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          xcodebuild -project Trailwise.xcodeproj -scheme Trailwise -configuration Release -destination 'generic/platform=iOS' -archivePath build/Trailwise.xcarchive archive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM="$TEAM" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
-          cat > build/ExportOptions.plist <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0"><dict>
-          <key>method</key><string>ad-hoc</string>
-          <key>teamID</key><string>$TEAM</string>
-          <key>signingStyle</key><string>manual</string>
-          <key>provisioningProfiles</key><dict><key>com.siguyyy.trailwise</key><string>$PROFILE_UUID</string></dict>
-          </dict></plist>
-          PLIST
-          xcodebuild -exportArchive -archivePath build/Trailwise.xcarchive -exportPath build/export -exportOptionsPlist build/ExportOptions.plist
-      - name: Upload signed IPA
-        if: steps.signing.outputs.configured == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: trailwise-signed-ipa
-          path: build/export/*.ipa
+          name: hikers-delight-organicmaps-unsigned-ipa
+          path: ${{ steps.prepare.outputs.organicmaps }}/build/HikersDelight-unsigned.ipa
           if-no-files-found: error
