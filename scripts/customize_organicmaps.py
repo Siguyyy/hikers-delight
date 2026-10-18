@@ -55,6 +55,14 @@ def main() -> None:
         "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight;",
     )
+    project_text = project_text.replace(
+        "BUNDLE_IDENTIFIER = app.organicmaps.debug;",
+        "BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight;",
+    )
+    project_text = project_text.replace(
+        "BUNDLE_IDENTIFIER = app.organicmaps;",
+        "BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight;",
+    )
     if project_text == old_project_text:
         raise RuntimeError("Could not find Organic Maps widget bundle identifiers")
     maps_project.write_text(project_text, encoding="utf-8")
@@ -94,21 +102,40 @@ def main() -> None:
     )
     replace_once(
         map_controller,
+        "- (void)viewDidAppear:(BOOL)animated\n{\n  [super viewDidAppear:animated];\n",
+        """- (void)viewDidAppear:(BOOL)animated
+{
+  [super viewDidAppear:animated];
+  [self hikersBringChromeToFront];
+""",
+    )
+    replace_once(
+        map_controller,
+        "- (void)viewDidLayoutSubviews\n{\n  [super viewDidLayoutSubviews];\n",
+        """- (void)viewDidLayoutSubviews
+{
+  [super viewDidLayoutSubviews];
+  [self hikersBringChromeToFront];
+""",
+    )
+    replace_once(
+        map_controller,
         "#pragma mark - Open controllers\n",
         r'''#pragma mark - Hiker's Delight surface
 
 - (UIButton *)hikersButtonWithTitle:(NSString *)title symbol:(NSString *)symbol
 {
   UIButton * button = [UIButton buttonWithType:UIButtonTypeSystem];
-  [button setTitle:title forState:UIControlStateNormal];
-  [button setImage:[UIImage systemImageNamed:symbol] forState:UIControlStateNormal];
-  button.tintColor = UIColor.labelColor;
-  button.titleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
-  button.titleLabel.adjustsFontSizeToFitWidth = YES;
-  button.titleLabel.minimumScaleFactor = 0.75;
-  button.backgroundColor = [UIColor colorWithWhite:1 alpha:0.92];
-  button.layer.cornerRadius = 20;
-  button.layer.masksToBounds = YES;
+  UIButtonConfiguration * configuration = [UIButtonConfiguration plainButtonConfiguration];
+  configuration.title = title;
+  configuration.image = [UIImage systemImageNamed:symbol];
+  configuration.imagePlacement = NSDirectionalRectEdgeTop;
+  configuration.imagePadding = 3;
+  configuration.contentInsets = NSDirectionalEdgeInsetsMake(6, 4, 6, 4);
+  configuration.baseForegroundColor = UIColor.labelColor;
+  button.configuration = configuration;
+  button.accessibilityLabel = title;
+  button.accessibilityTraits = UIAccessibilityTraitButton;
   button.translatesAutoresizingMaskIntoConstraints = NO;
   return button;
 }
@@ -139,7 +166,7 @@ def main() -> None:
 
   UIView * header = [[UIView alloc] init];
   header.translatesAutoresizingMaskIntoConstraints = NO;
-  header.backgroundColor = [UIColor colorWithWhite:1 alpha:0.94];
+  header.backgroundColor = [UIColor systemBackgroundColor];
   header.layer.cornerRadius = 22;
   header.layer.shadowColor = UIColor.blackColor.CGColor;
   header.layer.shadowOpacity = 0.14;
@@ -154,41 +181,56 @@ def main() -> None:
   eyebrow.translatesAutoresizingMaskIntoConstraints = NO;
 
   UILabel * title = [[UILabel alloc] init];
-  title.text = @"Find your next line";
-  title.font = [UIFont systemFontOfSize:19 weight:UIFontWeightBold];
+  title.text = @"Explore the outdoors";
+  title.font = [UIFont preferredFontForTextStyle:UIFontTextStyleTitle3];
+  title.adjustsFontForContentSizeCategory = YES;
   title.textColor = UIColor.labelColor;
   title.translatesAutoresizingMaskIntoConstraints = NO;
 
+  UILabel * hint = [[UILabel alloc] init];
+  hint.text = @"Offline maps for your next route";
+  hint.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+  hint.textColor = UIColor.secondaryLabelColor;
+  hint.adjustsFontForContentSizeCategory = YES;
+  hint.translatesAutoresizingMaskIntoConstraints = NO;
+
   UIButton * search = [UIButton buttonWithType:UIButtonTypeSystem];
-  [search setImage:[UIImage systemImageNamed:@"magnifyingglass"] forState:UIControlStateNormal];
-  search.tintColor = UIColor.labelColor;
-  search.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1];
-  search.layer.cornerRadius = 18;
+  UIButtonConfiguration * searchConfiguration = [UIButtonConfiguration tintedButtonConfiguration];
+  searchConfiguration.title = @"Search trails, parks, and peaks";
+  searchConfiguration.image = [UIImage systemImageNamed:@"magnifyingglass"];
+  searchConfiguration.imagePadding = 8;
+  searchConfiguration.contentInsets = NSDirectionalEdgeInsetsMake(10, 14, 10, 14);
+  searchConfiguration.baseForegroundColor = UIColor.labelColor;
+  search.configuration = searchConfiguration;
+  search.accessibilityLabel = @"Search trails, parks, and peaks";
   search.translatesAutoresizingMaskIntoConstraints = NO;
   [search addTarget:self action:@selector(hikersSearch) forControlEvents:UIControlEventTouchUpInside];
 
   [self.view addSubview:header];
   [header addSubview:eyebrow];
   [header addSubview:title];
+  [header addSubview:hint];
   [header addSubview:search];
   [NSLayoutConstraint activateConstraints:@[
     [header.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
     [header.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:14],
     [header.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-14],
-    [header.heightAnchor constraintEqualToConstant:66],
+    [header.heightAnchor constraintEqualToConstant:126],
     [eyebrow.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:16],
     [eyebrow.topAnchor constraintEqualToAnchor:header.topAnchor constant:11],
     [title.leadingAnchor constraintEqualToAnchor:eyebrow.leadingAnchor],
     [title.topAnchor constraintEqualToAnchor:eyebrow.bottomAnchor constant:1],
+    [hint.leadingAnchor constraintEqualToAnchor:eyebrow.leadingAnchor],
+    [hint.topAnchor constraintEqualToAnchor:title.bottomAnchor constant:2],
+    [search.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:10],
     [search.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-10],
-    [search.centerYAnchor constraintEqualToAnchor:header.centerYAnchor],
-    [search.widthAnchor constraintEqualToConstant:36],
-    [search.heightAnchor constraintEqualToConstant:36]
+    [search.bottomAnchor constraintEqualToAnchor:header.bottomAnchor constant:-10],
+    [search.heightAnchor constraintGreaterThanOrEqualToConstant:44]
   ]];
 
   UIView * bottom = [[UIView alloc] init];
   bottom.translatesAutoresizingMaskIntoConstraints = NO;
-  bottom.backgroundColor = [UIColor colorWithWhite:1 alpha:0.94];
+  bottom.backgroundColor = [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:0.96];
   bottom.layer.cornerRadius = 25;
   bottom.layer.shadowColor = UIColor.blackColor.CGColor;
   bottom.layer.shadowOpacity = 0.16;
@@ -200,15 +242,18 @@ def main() -> None:
   actions.axis = UILayoutConstraintAxisHorizontal;
   actions.alignment = UIStackViewAlignmentCenter;
   actions.distribution = UIStackViewDistributionFillEqually;
-  actions.spacing = 8;
+  actions.spacing = 2;
   actions.translatesAutoresizingMaskIntoConstraints = NO;
 
+  UIButton * explore = [self hikersButtonWithTitle:@"Explore" symbol:@"map.fill"];
   UIButton * plan = [self hikersButtonWithTitle:@"Plan" symbol:@"point.topleft.down.curvedto.point.bottomright.up"];
   UIButton * saved = [self hikersButtonWithTitle:@"Saved" symbol:@"bookmark.fill"];
   UIButton * offline = [self hikersButtonWithTitle:@"Offline" symbol:@"arrow.down.circle.fill"];
+  [explore addTarget:self action:@selector(hikersSearch) forControlEvents:UIControlEventTouchUpInside];
   [plan addTarget:self action:@selector(hikersPlan) forControlEvents:UIControlEventTouchUpInside];
   [saved addTarget:self action:@selector(hikersSaved) forControlEvents:UIControlEventTouchUpInside];
   [offline addTarget:self action:@selector(hikersDownloads) forControlEvents:UIControlEventTouchUpInside];
+  [actions addArrangedSubview:explore];
   [actions addArrangedSubview:plan];
   [actions addArrangedSubview:saved];
   [actions addArrangedSubview:offline];
@@ -218,14 +263,21 @@ def main() -> None:
     [bottom.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:14],
     [bottom.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-14],
     [bottom.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8],
-    [bottom.heightAnchor constraintEqualToConstant:58],
+    [bottom.heightAnchor constraintEqualToConstant:84],
     [actions.leadingAnchor constraintEqualToAnchor:bottom.leadingAnchor constant:8],
     [actions.trailingAnchor constraintEqualToAnchor:bottom.trailingAnchor constant:-8],
     [actions.topAnchor constraintEqualToAnchor:bottom.topAnchor constant:7],
     [actions.bottomAnchor constraintEqualToAnchor:bottom.bottomAnchor constant:-7]
   ]];
-  [self.view bringSubviewToFront:header];
-  [self.view bringSubviewToFront:bottom];
+  [self hikersBringChromeToFront];
+}
+
+- (void)hikersBringChromeToFront
+{
+  if (self.hikersHeader != nil)
+    [self.view bringSubviewToFront:self.hikersHeader];
+  if (self.hikersBottomBar != nil)
+    [self.view bringSubviewToFront:self.hikersBottomBar];
 }
 
 #pragma mark - Open controllers

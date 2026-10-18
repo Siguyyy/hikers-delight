@@ -48,8 +48,7 @@ xcodebuild build \
   -sdk iphoneos \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
-  PRODUCT_BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight
+  MARKETING_VERSION=0.1.0
 ```
 
 The GitHub workflow uploads an **unsigned** IPA. It must be signed with an

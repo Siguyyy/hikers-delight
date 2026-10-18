@@ -50,6 +50,11 @@ jobs:
           cd build
           zip -qry HikersDelight-unsigned.ipa Payload
 
+      - name: Validate IPA bundles
+        working-directory: ${{ steps.prepare.outputs.organicmaps }}
+        shell: bash
+        run: python3 "${GITHUB_WORKSPACE}/scripts/validate_ipa.py" build/HikersDelight-unsigned.ipa
+
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
