@@ -19,7 +19,9 @@ jobs:
       - name: Checkout pinned Organic Maps source and apply Hiker's Delight layer
         id: prepare
         shell: bash
-        run: echo "organicmaps=$(scripts/prepare_organicmaps.sh)" >> "$GITHUB_OUTPUT"
+        run: |
+          scripts/prepare_organicmaps.sh
+          echo "organicmaps=$RUNNER_TEMP/organicmaps" >> "$GITHUB_OUTPUT"
 
       - name: Build the real offline-map app
         shell: bash
