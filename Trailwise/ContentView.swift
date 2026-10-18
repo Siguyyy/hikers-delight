@@ -38,7 +38,7 @@ struct ContentView: View {
                 case .saved:
                     SavedView(selectedTab: $selectedTab, isImportingGPX: $isImportingGPX)
                 case .offline:
-                    OfflineView(showingLayers: $showingLayers, offline: model.offline)
+                    OfflineView(offline: model.offline, showingLayers: $showingLayers)
                 }
             }
 
