@@ -20,17 +20,17 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Build unsigned app
-        run: xcodebuild -project Trailwise.xcodeproj -scheme Trailwise -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project HikersDelight.xcodeproj -scheme HikersDelight -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Package unsigned IPA for signing
         run: |
           mkdir -p build/Payload
-          cp -R build/Build/Products/Release-iphoneos/Trailwise.app build/Payload/
-          cd build && zip -r Trailwise-unsigned.ipa Payload
+          cp -R build/Build/Products/Release-iphoneos/HikersDelight.app build/Payload/
+          cd build && zip -r HikersDelight-unsigned.ipa Payload
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: trailwise-unsigned-ipa
-          path: build/Trailwise-unsigned.ipa
+          name: hikers-delight-unsigned-ipa
+          path: build/HikersDelight-unsigned.ipa
           if-no-files-found: error
       - name: Check Apple signing configuration
         id: signing
@@ -55,8 +55,8 @@ jobs:
           PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
         run: |
           echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
-          echo "$PROFILE" | base64 --decode > "$RUNNER_TEMP/trailwise.mobileprovision"
-          security cms -D -i "$RUNNER_TEMP/trailwise.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          echo "$PROFILE" | base64 --decode > "$RUNNER_TEMP/hikers-delight.mobileprovision"
+          security cms -D -i "$RUNNER_TEMP/hikers-delight.mobileprovision" > "$RUNNER_TEMP/profile.plist"
           KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/build.keychain"
           security set-keychain-settings -lut 21600 "$RUNNER_TEMP/build.keychain"
@@ -66,14 +66,14 @@ jobs:
           security list-keychains -d user -s "$RUNNER_TEMP/build.keychain"
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$RUNNER_TEMP/profile.plist")
-          cp "$RUNNER_TEMP/trailwise.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          cp "$RUNNER_TEMP/hikers-delight.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
       - name: Archive and export signed IPA
         if: steps.signing.outputs.configured == 'true'
         env:
           TEAM: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          xcodebuild -project Trailwise.xcodeproj -scheme Trailwise -configuration Release -destination 'generic/platform=iOS' -archivePath build/Trailwise.xcarchive archive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM="$TEAM" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
+          xcodebuild -project HikersDelight.xcodeproj -scheme HikersDelight -configuration Release -destination 'generic/platform=iOS' -archivePath build/HikersDelight.xcarchive archive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM="$TEAM" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
           cat > build/ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -81,14 +81,15 @@ jobs:
           <key>method</key><string>ad-hoc</string>
           <key>teamID</key><string>$TEAM</string>
           <key>signingStyle</key><string>manual</string>
-          <key>provisioningProfiles</key><dict><key>com.siguyyy.trailwise</key><string>$PROFILE_UUID</string></dict>
+          <key>provisioningProfiles</key><dict><key>com.siguyyy.hikersdelight</key><string>$PROFILE_UUID</string></dict>
           </dict></plist>
           PLIST
-          xcodebuild -exportArchive -archivePath build/Trailwise.xcarchive -exportPath build/export -exportOptionsPlist build/ExportOptions.plist
+          xcodebuild -exportArchive -archivePath build/HikersDelight.xcarchive -exportPath build/export -exportOptionsPlist build/ExportOptions.plist
       - name: Upload signed IPA
         if: steps.signing.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: trailwise-signed-ipa
+          name: hikers-delight-signed-ipa
           path: build/export/*.ipa
           if-no-files-found: error
+
