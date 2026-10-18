@@ -14,4 +14,3 @@ git -C "${checkout}" submodule update --init --recursive --depth 1
 
 python3 "${repo_root}/scripts/customize_organicmaps.py" "${checkout}"
 printf '%s\n' "${checkout}"
-
