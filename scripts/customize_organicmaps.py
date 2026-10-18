@@ -47,6 +47,14 @@ def main() -> None:
         "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps.widgetextension;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight.OMapsWidgetExtension;",
     )
+    project_text = project_text.replace(
+        "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps.debug;",
+        "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight;",
+    )
+    project_text = project_text.replace(
+        "PRODUCT_BUNDLE_IDENTIFIER = app.organicmaps;",
+        "PRODUCT_BUNDLE_IDENTIFIER = com.siguyyy.hikersdelight;",
+    )
     if project_text == old_project_text:
         raise RuntimeError("Could not find Organic Maps widget bundle identifiers")
     maps_project.write_text(project_text, encoding="utf-8")
