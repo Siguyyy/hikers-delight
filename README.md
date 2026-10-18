@@ -49,8 +49,7 @@ xcodebuild build \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
-  PRODUCT_BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
-  PRODUCT_NAME=HikersDelight
+  PRODUCT_BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight
 ```
 
 The GitHub workflow uploads an **unsigned** IPA. It must be signed with an
@@ -62,4 +61,3 @@ install it.
 Organic Maps is GPLv3; its source, dependencies, and OpenStreetMap/OpenMapTiles
 data terms apply to this derived build. Keep the required attribution and
 license notices when redistributing the app.
-

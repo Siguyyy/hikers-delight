@@ -37,7 +37,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
             PRODUCT_BUNDLE_IDENTIFIER=com.siguyyy.hikersdelight \
-            PRODUCT_NAME=HikersDelight \
             MARKETING_VERSION=0.1.0 \
             CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
@@ -58,4 +57,3 @@ jobs:
           name: hikers-delight-organicmaps-unsigned-ipa
           path: ${{ steps.prepare.outputs.organicmaps }}/build/HikersDelight-unsigned.ipa
           if-no-files-found: error
-
