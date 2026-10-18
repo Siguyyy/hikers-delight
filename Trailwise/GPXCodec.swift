@@ -10,7 +10,7 @@ enum GPXCodec {
         }.joined(separator: "\n")
         let xml = """
         <?xml version="1.0" encoding="UTF-8"?>
-        <gpx version="1.1" creator="Trailwise" xmlns="http://www.topografix.com/GPX/1/1">
+        <gpx version="1.1" creator="Hiker's Delight" xmlns="http://www.topografix.com/GPX/1/1">
           <trk><name>\(title)</name><trkseg>
         \(points)
           </trkseg></trk>
@@ -64,3 +64,4 @@ struct GPXDocument: FileDocument {
         FileWrapper(regularFileWithContents: GPXCodec.encode(route))
     }
 }
+
