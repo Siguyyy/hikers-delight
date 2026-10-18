@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct TrailwiseApp: App {
+struct HikersDelightApp: App {
     @StateObject private var model = TrailwiseModel()
 
     var body: some Scene {
@@ -12,3 +12,4 @@ struct TrailwiseApp: App {
         }
     }
 }
+
